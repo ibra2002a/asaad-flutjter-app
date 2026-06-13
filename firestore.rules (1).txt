@@ -1,0 +1,165 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ══════════════════════════════════════
+    //  Helper Functions
+    // ══════════════════════════════════════
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isEmployee() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'employee';
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdminOrEmployee() {
+      return isAdmin() || isEmployee();
+    }
+
+    // ══════════════════════════════════════
+    //  Users Collection
+    // ══════════════════════════════════════
+    match /users/{userId} {
+      // User can read their own profile; admin can read all
+      allow read: if isOwner(userId) || isAdmin();
+
+      // User can create their own profile on registration
+      allow create: if isOwner(userId);
+
+      // User can update their own profile; admin can update any
+      allow update: if isOwner(userId) || isAdmin();
+
+      // Only admin can delete users
+      allow delete: if isAdmin();
+    }
+
+    // ══════════════════════════════════════
+    //  Orders Collection
+    // ══════════════════════════════════════
+    match /orders/{orderId} {
+      // Client can read their own orders; admin/employee can read all
+      allow read: if isAuthenticated() &&
+        (resource.data.clientId == request.auth.uid || isAdminOrEmployee());
+
+      // Authenticated users can create orders
+      allow create: if isAuthenticated();
+
+      // Client can update only notes/attachments on new orders
+      // Admin/employee can update any field
+      allow update: if isAuthenticated() &&
+        (
+          (resource.data.clientId == request.auth.uid && resource.data.status == 'new') ||
+          isAdminOrEmployee()
+        );
+
+      // Only admin can delete orders
+      allow delete: if isAdmin();
+    }
+
+    // ══════════════════════════════════════
+    //  Services Collection
+    // ══════════════════════════════════════
+    match /services/{serviceId} {
+      // Anyone (even unauthenticated) can read services
+      allow read: if true;
+
+      // Only admin can create/update/delete services
+      allow write: if isAdmin();
+    }
+
+    // ══════════════════════════════════════
+    //  Chats Collection
+    // ══════════════════════════════════════
+    match /chats/{chatId} {
+      allow read: if isAuthenticated() &&
+        (chatId == 'chat_' + request.auth.uid || isAdminOrEmployee());
+
+      allow write: if isAuthenticated() &&
+        (chatId == 'chat_' + request.auth.uid || isAdminOrEmployee());
+
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() &&
+          (chatId == 'chat_' + request.auth.uid || isAdminOrEmployee());
+
+        allow create: if isAuthenticated() &&
+          (chatId == 'chat_' + request.auth.uid || isAdminOrEmployee());
+
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    // ══════════════════════════════════════
+    //  Notifications Collection
+    // ══════════════════════════════════════
+    match /notifications/{notifId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.userId == request.auth.uid || isAdmin());
+
+      allow create: if isAuthenticated();
+
+      allow update: if isAuthenticated() &&
+        (resource.data.userId == request.auth.uid || isAdmin());
+
+      allow delete: if isAdmin();
+    }
+
+    // ══════════════════════════════════════
+    //  Portfolio Collection
+    // ══════════════════════════════════════
+    match /portfolio/{itemId} {
+      // Public read access
+      allow read: if true;
+
+      // Only admin can manage portfolio
+      allow write: if isAdmin();
+    }
+
+    // ══════════════════════════════════════
+    //  Reviews Collection
+    // ══════════════════════════════════════
+    match /reviews/{reviewId} {
+      // Public read
+      allow read: if true;
+
+      // Authenticated users can create reviews
+      allow create: if isAuthenticated();
+
+      // Only admin or review owner can update/delete
+      allow update, delete: if isAuthenticated() &&
+        (resource.data.clientId == request.auth.uid || isAdmin());
+    }
+
+    // ══════════════════════════════════════
+    //  Payments Collection
+    // ══════════════════════════════════════
+    match /payments/{paymentId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.clientId == request.auth.uid || isAdmin());
+
+      allow create: if isAuthenticated();
+
+      allow update: if isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    // ══════════════════════════════════════
+    //  Offers Collection
+    // ══════════════════════════════════════
+    match /offers/{offerId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
