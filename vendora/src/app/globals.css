@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+/* VENDORA palette: restrained dark green, white, and lime accent. */
+@theme {
+  --color-brand-950: #062119;
+  --color-brand-900: #0b2e22;
+  --color-brand-800: #0f3d2e;
+  --color-brand-700: #145c43;
+  --color-brand-600: #1b7a58;
+  --color-brand-100: #dcefe6;
+  --color-brand-50: #f1f8f4;
+  --color-lime-500: #84cc16;
+  --color-lime-400: #a3e635;
+  --color-lime-100: #ecfccb;
+  --color-ink: #0f1f19;
+  --color-muted: #5b6b64;
+  --color-line: #e2e9e5;
+  --color-danger: #b42318;
+  --color-warning: #b54708;
+
+  /* System fonts with Arabic support (no external font download needed). */
+  --font-sans: "Segoe UI", Tahoma, "Noto Sans Arabic", "Noto Kufi Arabic", "Geeza Pro", Arial, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: #ffffff;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.7;
+}
+
+/* Keep numbers readable and aligned in tables, even in Arabic text. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
