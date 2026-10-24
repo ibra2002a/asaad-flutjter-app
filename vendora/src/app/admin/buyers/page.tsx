@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ActionForm } from '@/components/ActionForm';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { adminSetProfileActiveAction } from '@/lib/actions/admin';
 import { Badge, Card, PageHeader, Textarea, formatDateAr } from '@/components/ui';
@@ -51,7 +52,7 @@ export default async function AdminBuyersPage({ searchParams }: { searchParams: 
                     {!b.is_active ? <Badge tone="danger">حساب معلق</Badge> : null}
                   </div>
                 </div>
-                <form action={adminSetProfileActiveAction} className="space-y-3 border-t border-line pt-4">
+                <ActionForm action={adminSetProfileActiveAction} className="space-y-3 border-t border-line pt-4">
                   <input type="hidden" name="profileId" value={b.id} />
                   <input type="hidden" name="returnTo" value="/admin/buyers" />
                   <label htmlFor={`reason-${b.id}`} className="text-sm font-semibold text-brand-950">السبب (مطلوب)</label>
@@ -61,7 +62,7 @@ export default async function AdminBuyersPage({ searchParams }: { searchParams: 
                   ) : (
                     <SubmitButton name="active" value="true" variant="secondary" pendingLabel="…" className="min-h-11">إعادة التفعيل</SubmitButton>
                   )}
-                </form>
+                </ActionForm>
               </Card>
             </li>
           ))}

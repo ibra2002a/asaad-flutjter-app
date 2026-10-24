@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ActionForm } from '@/components/ActionForm';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -84,11 +85,11 @@ export default async function EditProductPage({ params, searchParams }: { params
                     <div className="relative aspect-square overflow-hidden rounded-xl border border-line bg-brand-50">
                       <Image src={imageUrlFor(supabase, image.storage_path)} alt="" fill sizes="160px" className="object-cover" />
                     </div>
-                    <form action={deleteProductImageAction}>
+                    <ActionForm action={deleteProductImageAction}>
                       <input type="hidden" name="imageId" value={image.id} />
                       <input type="hidden" name="productId" value={values.id} />
                       <SubmitButton variant="ghost" pendingLabel="…" className="min-h-9 w-full text-xs text-red-700">حذف الصورة</SubmitButton>
-                    </form>
+                    </ActionForm>
                   </li>
                 ))}
               </ul>

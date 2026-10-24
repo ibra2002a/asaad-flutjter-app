@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ActionForm } from '@/components/ActionForm';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { listCategories } from '@/lib/data/catalog';
 import { adminSettleCommissionAction } from '@/lib/actions/admin';
@@ -114,10 +115,10 @@ export default async function AdminCommissionsPage({ searchParams }: { searchPar
                       <p className="ltr-num mt-1 text-sm">المبيعات {formatIqd(Number(c.eligible_base_iqd))} · العمولة {formatIqd(net(c))}</p>
                     </div>
                     {c.status === 'accrued' ? (
-                      <form action={adminSettleCommissionAction}>
+                      <ActionForm action={adminSettleCommissionAction}>
                         <input type="hidden" name="commissionId" value={c.id} />
                         <SubmitButton variant="secondary" pendingLabel="…" className="min-h-10 px-4 text-xs">تسوية يدوية</SubmitButton>
-                      </form>
+                      </ActionForm>
                     ) : (
                       <Badge tone="brand">مسوّاة</Badge>
                     )}

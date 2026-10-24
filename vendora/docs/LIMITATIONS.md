@@ -40,6 +40,9 @@ This is an honest list of what the MVP does **not** do yet, plus what must happe
 
 ## Technical limitations
 
+- **Loading state**: pages do not show a skeleton while streaming. A root `loading.tsx` was removed because it caused the address form (and other content) to be rendered twice on about 1 in 13 full page loads, verified in the browser. Pages load in one step instead.
+- **Form results**: administrator and order-status forms show results inline (they no longer redirect), so the page stays put and refreshes its data.
+
 - **Concurrency tests**: the database tests run sequentially in one in-process PostgreSQL. Race conditions for overselling are guarded by row locks (`SELECT … FOR UPDATE` in `place_order`) and by the per-buyer lock, but this has not been stress-tested under real concurrent load.
 - **Test database**: `npm run test:db` uses PGlite (PostgreSQL 17 in WebAssembly) with a minimal shim for Supabase's `auth` schema. Supabase-specific behaviour (for example, Storage policies) is not exercised by these tests; the storage migration is skipped when the `storage` schema is absent.
 - **End-to-end flows**: the browser suite checks RTL and responsive layout on public pages. Full signup-to-delivery flows through the UI are not automated yet; they are covered at the database layer and listed as manual steps in `docs/DEPLOYMENT.md`.

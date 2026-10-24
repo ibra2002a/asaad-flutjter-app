@@ -2,7 +2,11 @@
 
 Status legend: ✅ verified by a command in this repository (evidence given) · 🟡 implemented, verification needs a configured Supabase project · ⬜ not done.
 
-Evidence commands are run from `vendora/`. Results are recorded in the final report, not claimed here in advance.
+Evidence commands are run from `vendora/`. Live verification was run against a local Supabase stack (PostgreSQL 17, GoTrue, PostgREST, Storage) started with `npx supabase start`, with every migration applied from `supabase/migrations/`.
+
+Verified against live Supabase in a real browser (phone 390px and desktop 1280px): sign-up for buyer, supplier and admin; supplier approval; product submission, moderation and publishing; product photo upload; address, cart and checkout; fulfilment to completion; buyer receipt confirmation; commission of IQD 12,000 on IQD 300,000 at 4%; buyer cancellation; supplier rejection with reason; return dispute and partial-return resolution with commission reversal; admin CSV export; anonymous and cross-role access refusal. Route sweep covers all 35 portal and public pages with no server errors or horizontal scroll.
+
+Not verified in a browser (covered at database level only, or not built): email notifications (none built), buyer suspension from the UI, category creation from the UI, commission-rule changes from the UI, full refund from the UI, supplier coverage editing, default-address change and delete, password reset (not built), account self-deletion (not built).
 
 ## A. Storefront
 | Item | Status | Evidence |
@@ -44,7 +48,7 @@ Evidence commands are run from `vendora/`. Results are recorded in the final rep
 | Supplier approval workflow with reasons | ✅ | `tests/db/workflows.test.ts` › supplier approval block |
 | Buyer suspension with reason; self-suspension blocked | ✅ | `tests/db/workflows.test.ts` › administrator controls |
 | Product moderation (reason required on rejection) | ✅ | `tests/db/workflows.test.ts` › "requires a reason to reject a product" |
-| Order management | 🟡 | `src/app/admin/orders/page.tsx` |
+| Order management | ✅ UI list + DB | `src/app/admin/orders/page.tsx`; route sweep |
 | Commission rules, precedence and rate freeze | ✅ | `tests/db/workflows.test.ts` › commission block; `tests/unit/commission.test.ts` |
 | Dispute resolution (partial, full, none) with commission reconciliation | ✅ | `tests/db/workflows.test.ts` › dispute block |
 | Audit logs | ✅ | `tests/db/workflows.test.ts` › "writes an audit entry…" and "keeps the audit log admin-only" |

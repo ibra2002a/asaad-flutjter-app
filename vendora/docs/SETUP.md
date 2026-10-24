@@ -11,6 +11,18 @@ database. Commands are exact; run them from the `vendora/` folder.
 | npm | 10 or newer (ships with Node) |
 | Supabase account | Free tier is enough for the pilot |
 
+## 1b. Run a full local Supabase stack (optional, recommended for testing)
+
+Requires Docker. This starts PostgreSQL 17, Auth, the REST API, Storage and Studio locally and applies every migration in `supabase/migrations/`:
+
+```bash
+npx supabase start          # first run downloads images (several GB)
+npx supabase status         # prints API URL and keys
+npx supabase stop           # when finished
+```
+
+Use the printed `API_URL` and `ANON_KEY` in `.env.local`. Local email confirmation is disabled, so sign-up returns a session immediately.
+
 ## 2. Install
 
 ```bash
@@ -91,7 +103,24 @@ npm run seed:demo
 
 Never run the seed against the production project.
 
-## 9. Quality checks
+## 9. Live tests (against a running Supabase)
+
+```bash
+# Live data path: auth, RLS, RPCs, storage policy (18 tests)
+SUPABASE_INTEGRATION=1 npm run test:integration
+
+# Full browser journey: sign-up → approval → publish → order → fulfil → commission,
+# plus cancellation, rejection, dispute and CSV export (35 steps). Needs the app
+# running (npm run build && npm run start -p 3200) and Chromium.
+E2E_BASE_URL=http://localhost:3200 E2E_DB_CONTAINER=supabase_db_vendora npm run test:flows
+
+# Route sweep: every portal page as each role, at phone width (35 checks)
+E2E_BASE_URL=http://localhost:3200 E2E_ANON_KEY=... npm run test:routes
+```
+
+The journey and route sweep create uniquely named `@vendora.test` accounts. They promote an admin with SQL through the local Supabase Docker container, so they are for local or test projects only.
+
+## 10. Quality checks
 
 ```bash
 npm run lint          # ESLint (Next.js rules, TypeScript)

@@ -5,24 +5,29 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { userMessageFor } from '@/lib/domain/errors';
 import { commissionPercentSchema, uuidSchema } from '@/lib/validation/schemas';
 import { flattenZodErrors, type FormState } from './types';
-import { redirectWithError, redirectWithNotice } from './helpers';
+
+/*
+ * Administrator actions. Each returns a FormState instead of redirecting: a
+ * redirect to the same page left the submitting form stuck in its pending state.
+ * Pages refresh through revalidatePath, and the result shows inline.
+ */
 
 const VERIFICATION = ['approved', 'rejected', 'suspended'] as const;
 const PRODUCT_STATUS = ['active', 'rejected', 'pending_review', 'archived'] as const;
 const RESOLUTIONS = ['partial_return', 'refund_full', 'no_action'] as const;
-const SAFE_RETURN_PATHS = ['/admin/suppliers', '/admin/buyers', '/admin/products', '/admin/disputes', '/admin/commissions'];
+const REVIEWABLE_PATHS = ['/admin/suppliers', '/admin/buyers', '/admin/products', '/admin/disputes', '/admin/commissions'];
 
 function safeReturnPath(value: FormDataEntryValue | null, fallback: string): string {
   const path = String(value ?? '');
-  return SAFE_RETURN_PATHS.includes(path) ? path : fallback;
+  return REVIEWABLE_PATHS.includes(path) ? path : fallback;
 }
 
-export async function adminReviewBusinessAction(formData: FormData): Promise<void> {
+export async function adminReviewBusinessAction(_previous: FormState, formData: FormData): Promise<FormState> {
   const returnTo = safeReturnPath(formData.get('returnTo'), '/admin/suppliers');
   const id = uuidSchema.safeParse(formData.get('businessId'));
   const status = String(formData.get('status') ?? '');
   if (!id.success || !(VERIFICATION as readonly string[]).includes(status)) {
-    redirectWithError(returnTo, 'بيانات غير صالحة.');
+    return { error: 'بيانات غير صالحة.' };
   }
   const note = String(formData.get('note') ?? '').trim() || null;
   const supabase = await createSupabaseServerClient();
@@ -31,17 +36,17 @@ export async function adminReviewBusinessAction(formData: FormData): Promise<voi
     p_status: status,
     p_note: note,
   });
+  if (error) return { error: userMessageFor(error) };
   revalidatePath(returnTo);
-  if (error) redirectWithError(returnTo, userMessageFor(error));
-  redirectWithNotice(returnTo, 'saved');
+  return { success: `تم تحديث حالة الحساب إلى: ${status === 'approved' ? 'معتمد' : status === 'rejected' ? 'مرفوض' : 'معلّق'}.` };
 }
 
-export async function adminSetProfileActiveAction(formData: FormData): Promise<void> {
+export async function adminSetProfileActiveAction(_previous: FormState, formData: FormData): Promise<FormState> {
   const returnTo = safeReturnPath(formData.get('returnTo'), '/admin/buyers');
   const id = uuidSchema.safeParse(formData.get('profileId'));
   const active = formData.get('active') === 'true';
   const reason = String(formData.get('reason') ?? '').trim();
-  if (!id.success) redirectWithError(returnTo, 'المستخدم غير صالح.');
+  if (!id.success) return { error: 'المستخدم غير صالح.' };
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.rpc('admin_set_profile_active', {
@@ -49,17 +54,17 @@ export async function adminSetProfileActiveAction(formData: FormData): Promise<v
     p_active: active,
     p_reason: reason,
   });
+  if (error) return { error: userMessageFor(error) };
   revalidatePath(returnTo);
-  if (error) redirectWithError(returnTo, userMessageFor(error));
-  redirectWithNotice(returnTo, 'saved');
+  return { success: active ? 'تمت إعادة تفعيل الحساب.' : 'تم تعليق الحساب.' };
 }
 
-export async function adminReviewProductAction(formData: FormData): Promise<void> {
+export async function adminReviewProductAction(_previous: FormState, formData: FormData): Promise<FormState> {
   const returnTo = safeReturnPath(formData.get('returnTo'), '/admin/products');
   const id = uuidSchema.safeParse(formData.get('productId'));
   const status = String(formData.get('status') ?? '');
   if (!id.success || !(PRODUCT_STATUS as readonly string[]).includes(status)) {
-    redirectWithError(returnTo, 'بيانات غير صالحة.');
+    return { error: 'بيانات غير صالحة.' };
   }
   const note = String(formData.get('note') ?? '').trim() || null;
   const supabase = await createSupabaseServerClient();
@@ -68,9 +73,10 @@ export async function adminReviewProductAction(formData: FormData): Promise<void
     p_status: status,
     p_note: note,
   });
+  if (error) return { error: userMessageFor(error) };
   revalidatePath(returnTo);
-  if (error) redirectWithError(returnTo, userMessageFor(error));
-  redirectWithNotice(returnTo, 'saved');
+  revalidatePath('/products');
+  return { success: status === 'active' ? 'تم نشر المنتج.' : 'تم رفض المنتج وإبلاغ المورد.' };
 }
 
 export async function adminUpsertCategoryAction(_previous: FormState, formData: FormData): Promise<FormState> {
@@ -125,31 +131,30 @@ export async function adminSetCommissionRuleAction(_previous: FormState, formDat
   if (error) return { error: userMessageFor(error) };
 
   revalidatePath('/admin/commissions');
-  return { success: 'تم تحديث نسبة العمولة. الطلبات السابقة تحتفظ بنسبتها الأصلية.' };
+  return { success: 'تم تحديث نسبة العمولة. الطلبات السابقة تحتفظ بالنسبة التي طُبقت وقت إنشائها.' };
 }
 
-export async function adminSettleCommissionAction(formData: FormData): Promise<void> {
+export async function adminSettleCommissionAction(_previous: FormState, formData: FormData): Promise<FormState> {
   const id = uuidSchema.safeParse(formData.get('commissionId'));
-  if (!id.success) redirectWithError('/admin/commissions', 'السجل غير صالح.');
+  if (!id.success) return { error: 'السجل غير صالح.' };
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.rpc('admin_mark_commission_settled', { p_commission_id: id.data });
+  if (error) return { error: userMessageFor(error) };
   revalidatePath('/admin/commissions');
-  if (error) redirectWithError('/admin/commissions', userMessageFor(error));
-  redirectWithNotice('/admin/commissions', 'settled');
+  return { success: 'تم تسجيل التسوية.' };
 }
 
-export async function adminResolveDisputeAction(formData: FormData): Promise<void> {
+export async function adminResolveDisputeAction(_previous: FormState, formData: FormData): Promise<FormState> {
   const id = uuidSchema.safeParse(formData.get('disputeId'));
-  const path = `/admin/disputes`;
-  if (!id.success) redirectWithError(path, 'النزاع غير صالح.');
+  if (!id.success) return { error: 'النزاع غير صالح.' };
 
   const resolution = String(formData.get('resolution') ?? '');
-  if (!(RESOLUTIONS as readonly string[]).includes(resolution)) redirectWithError(path, 'اختر نوع الحل.');
+  if (!(RESOLUTIONS as readonly string[]).includes(resolution)) return { error: 'اختر نوع الحل.' };
 
   const quantityRaw = String(formData.get('returnedQuantity') ?? '').trim();
   const quantity = quantityRaw === '' ? null : Number(quantityRaw);
   if (quantity !== null && (!Number.isInteger(quantity) || quantity < 1)) {
-    redirectWithError(path, 'كمية الإرجاع غير صحيحة.');
+    return { error: 'كمية الإرجاع غير صحيحة.' };
   }
 
   const supabase = await createSupabaseServerClient();
@@ -159,8 +164,8 @@ export async function adminResolveDisputeAction(formData: FormData): Promise<voi
     p_note: String(formData.get('note') ?? '').trim(),
     p_returned_quantity: quantity,
   });
-  revalidatePath(path);
-  if (error) redirectWithError(path, userMessageFor(error));
-  redirectWithNotice(path, 'resolved');
+  if (error) return { error: userMessageFor(error) };
+  revalidatePath('/admin/disputes');
+  revalidatePath('/admin');
+  return { success: 'تم حل النزاع وتحديث الطلب والعمولة.' };
 }
-

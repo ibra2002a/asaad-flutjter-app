@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ActionForm } from '@/components/ActionForm';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { adminReviewBusinessAction } from '@/lib/actions/admin';
 import { formatDateAr, Card, PageHeader, Select, buttonClass, Textarea } from '@/components/ui';
@@ -77,7 +78,7 @@ export default async function AdminSuppliersPage({ searchParams }: { searchParam
                 </div>
                 {s.review_note ? <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">ملاحظة المراجعة: {s.review_note}</p> : null}
 
-                <form action={adminReviewBusinessAction} className="space-y-3 border-t border-line pt-4">
+                <ActionForm action={adminReviewBusinessAction} className="space-y-3 border-t border-line pt-4">
                   <input type="hidden" name="businessId" value={s.id} />
                   <input type="hidden" name="returnTo" value="/admin/suppliers" />
                   <label htmlFor={`note-${s.id}`} className="text-sm font-semibold text-brand-950">ملاحظة للمورد</label>
@@ -87,7 +88,7 @@ export default async function AdminSuppliersPage({ searchParams }: { searchParam
                     <SubmitButton name="status" value="rejected" variant="secondary" pendingLabel="…" className="min-h-11">رفض</SubmitButton>
                     <SubmitButton name="status" value="suspended" variant="danger" pendingLabel="…" className="min-h-11">تعليق</SubmitButton>
                   </div>
-                </form>
+                </ActionForm>
               </Card>
             </li>
           ))}

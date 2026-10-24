@@ -14,7 +14,10 @@
     "test:db": "vitest run --config vitest.db.config.ts",
     "test:e2e": "node scripts/e2e-smoke.mjs",
     "seed:demo": "tsx scripts/seed-demo.ts",
-    "check": "npm run lint && npm run typecheck && npm run test && npm run build"
+    "check": "npm run lint && npm run typecheck && npm run test && npm run build",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:flows": "node scripts/e2e-flows.mjs",
+    "test:routes": "node scripts/e2e-routes.mjs"
   },
   "engines": {
     "node": ">=20.9.0"

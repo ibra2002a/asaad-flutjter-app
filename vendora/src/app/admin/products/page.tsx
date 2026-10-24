@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ActionForm } from '@/components/ActionForm';
 import Image from 'next/image';
 import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -86,7 +87,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                       <ProductStatusBadge status={p.status} />
                     </div>
                     {p.moderation_note ? <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm">ملاحظة سابقة: {p.moderation_note}</p> : null}
-                    <form action={adminReviewProductAction} className="space-y-3">
+                    <ActionForm action={adminReviewProductAction} className="space-y-3">
                       <input type="hidden" name="productId" value={p.id} />
                       <input type="hidden" name="returnTo" value="/admin/products" />
                       <label htmlFor={`note-${p.id}`} className="text-sm font-semibold text-brand-950">ملاحظة للمورد (مطلوبة عند الرفض)</label>
@@ -96,7 +97,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                         <SubmitButton name="status" value="rejected" variant="danger" pendingLabel="…" className="min-h-11">رفض</SubmitButton>
                         <Link href={`/products/${p.id}`} className={buttonClass('ghost', 'min-h-11')}>معاينة</Link>
                       </div>
-                    </form>
+                    </ActionForm>
                   </div>
                 </Card>
               </li>

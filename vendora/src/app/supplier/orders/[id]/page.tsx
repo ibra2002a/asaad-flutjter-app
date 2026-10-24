@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ActionForm } from '@/components/ActionForm';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getOrderDetail } from '@/lib/data/orders';
@@ -83,22 +84,22 @@ export default async function SupplierOrderDetailPage({ params, searchParams }: 
             ) : (
               <div className="space-y-3">
                 {advance.map((to) => (
-                  <form key={to} action={supplierTransitionAction}>
+                  <ActionForm key={to} action={supplierTransitionAction}>
                     <input type="hidden" name="orderId" value={order.id} />
                     <input type="hidden" name="to" value={to} />
                     <SubmitButton variant={to === 'accepted' ? 'accent' : 'primary'} className="w-full">
                       {NEXT_LABEL[to] ?? ORDER_STATUS_LABEL_AR[to]}
                     </SubmitButton>
-                  </form>
+                  </ActionForm>
                 ))}
                 {canReject ? (
-                  <form action={supplierTransitionAction} className="space-y-2 border-t border-line pt-4">
+                  <ActionForm action={supplierTransitionAction} className="space-y-2 border-t border-line pt-4">
                     <input type="hidden" name="orderId" value={order.id} />
                     <input type="hidden" name="to" value="cancelled" />
                     <label htmlFor="reject-reason" className="text-sm font-semibold text-brand-950">سبب الرفض (مطلوب)</label>
                     <Textarea id="reject-reason" name="reason" required minLength={3} maxLength={500} className="min-h-20" />
                     <SubmitButton variant="danger" className="w-full">رفض الطلب</SubmitButton>
-                  </form>
+                  </ActionForm>
                 ) : null}
               </div>
             )}

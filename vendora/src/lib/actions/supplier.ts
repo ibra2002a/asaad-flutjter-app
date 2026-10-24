@@ -140,16 +140,18 @@ export async function updateProductAction(_previous: FormState, formData: FormDa
   return { success: 'تم حفظ المنتج.' };
 }
 
-export async function deleteProductImageAction(formData: FormData): Promise<void> {
+export async function deleteProductImageAction(_previous: FormState, formData: FormData): Promise<FormState> {
   const id = uuidSchema.safeParse(formData.get('imageId'));
   const productId = uuidSchema.safeParse(formData.get('productId'));
-  if (!id.success || !productId.success) return;
+  if (!id.success || !productId.success) return { error: 'الصورة غير صالحة.' };
   const supabase = await createSupabaseServerClient();
   const { data: image } = await supabase.from('product_images').select('storage_path').eq('id', id.data).maybeSingle();
-  if (!image) return;
-  await supabase.from('product_images').delete().eq('id', id.data);
+  if (!image) return { error: 'الصورة غير موجودة.' };
+  const { error } = await supabase.from('product_images').delete().eq('id', id.data);
+  if (error) return { error: userMessageFor(error) };
   await supabase.storage.from(BUCKET).remove([image.storage_path as string]);
   revalidatePath(`/supplier/products/${productId.data}`);
+  return { success: 'تم حذف الصورة.' };
 }
 
 export async function setSupplierCoverageAction(_previous: FormState, formData: FormData): Promise<FormState> {
@@ -175,18 +177,17 @@ export async function setSupplierCoverageAction(_previous: FormState, formData: 
   return { success: 'تم حفظ مناطق التغطية.' };
 }
 
-export async function supplierTransitionAction(formData: FormData): Promise<void> {
+export async function supplierTransitionAction(_previous: FormState, formData: FormData): Promise<FormState> {
   const id = uuidSchema.safeParse(formData.get('orderId'));
   const to = String(formData.get('to') ?? '');
   const reason = String(formData.get('reason') ?? '').trim() || null;
-  const path = `/supplier/orders/${id.success ? id.data : ''}`;
-  if (!id.success) redirectWithError('/supplier/orders', 'الطلب غير صالح.');
+  if (!id.success) return { error: 'الطلب غير صالح.' };
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.rpc('transition_order', { p_order_id: id.data, p_to: to, p_reason: reason });
-  revalidatePath(path);
+  revalidatePath(`/supplier/orders/${id.data}`);
   revalidatePath('/supplier/orders');
   revalidatePath('/supplier');
-  if (error) redirectWithError(path, userMessageFor(error));
-  redirectWithNotice(path, 'updated');
+  if (error) return { error: userMessageFor(error) };
+  return { success: 'تم تحديث حالة الطلب.' };
 }

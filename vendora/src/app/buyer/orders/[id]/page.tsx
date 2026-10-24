@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ActionForm } from '@/components/ActionForm';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getOrderDetail } from '@/lib/data/orders';
@@ -86,19 +87,19 @@ export default async function BuyerOrderDetailPage({ params, searchParams }: { p
             <h2 className="mb-4 text-lg font-bold text-brand-950">إجراءات</h2>
             <div className="space-y-4">
               {canConfirm ? (
-                <form action={confirmReceiptAction} className="space-y-2">
+                <ActionForm action={confirmReceiptAction} className="space-y-2">
                   <input type="hidden" name="orderId" value={order.id} />
                   <p className="text-sm text-slate-700">استلمت الطلب كاملا وبحالة جيدة؟ أكد الاستلام لإغلاق الطلب.</p>
                   <SubmitButton variant="accent" className="w-full">تأكيد الاستلام</SubmitButton>
-                </form>
+                </ActionForm>
               ) : null}
               {canCancel ? (
-                <form action={cancelOrderAction} className="space-y-2 border-t border-line pt-4">
+                <ActionForm action={cancelOrderAction} className="space-y-2 border-t border-line pt-4">
                   <input type="hidden" name="orderId" value={order.id} />
                   <label htmlFor="cancel-reason" className="text-sm font-semibold text-brand-950">سبب الإلغاء (اختياري)</label>
                   <textarea id="cancel-reason" name="reason" maxLength={500} className="min-h-20 w-full rounded-xl border border-line p-3 text-sm" />
                   <SubmitButton variant="danger" className="w-full">إلغاء الطلب</SubmitButton>
-                </form>
+                </ActionForm>
               ) : null}
               {!canCancel && !canConfirm && !openDispute && !canOpenDispute(order.status) ? (
                 <p className="text-sm text-muted">لا توجد إجراءات متاحة لهذه المرحلة. يمكنك متابعة الطلب هنا حتى يتم تحديثه.</p>

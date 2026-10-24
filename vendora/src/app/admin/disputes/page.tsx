@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ActionForm } from '@/components/ActionForm';
 import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { adminResolveDisputeAction } from '@/lib/actions/admin';
@@ -62,7 +63,7 @@ export default async function AdminDisputesPage({ searchParams }: { searchParams
                   </p>
                 ) : null}
 
-                <form action={adminResolveDisputeAction} className="grid gap-4 border-t border-line pt-4 md:grid-cols-2">
+                <ActionForm action={adminResolveDisputeAction} className="grid gap-4 border-t border-line pt-4 md:grid-cols-2">
                   <input type="hidden" name="disputeId" value={d.id} />
                   <div className="space-y-2 md:col-span-2">
                     <label htmlFor={`note-${d.id}`} className="text-sm font-semibold text-brand-950">ملاحظة الحل (مطلوبة، تظهر للطرفين)</label>
@@ -77,7 +78,7 @@ export default async function AdminDisputesPage({ searchParams }: { searchParams
                     <SubmitButton name="resolution" value="refund_full" variant="danger" pendingLabel="…" className="min-h-11">استرداد كامل</SubmitButton>
                     <SubmitButton name="resolution" value="no_action" variant="ghost" pendingLabel="…" className="min-h-11">رفض النزاع</SubmitButton>
                   </div>
-                </form>
+                </ActionForm>
               </Card>
             </li>
           ))}

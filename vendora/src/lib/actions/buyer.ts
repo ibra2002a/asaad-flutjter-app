@@ -7,7 +7,6 @@ import { MAX_CART_LINES, MAX_LINE_QUANTITY, type ProductConstraints } from '@/li
 import { userMessageFor } from '@/lib/domain/errors';
 import { disputeSchema, uuidSchema } from '@/lib/validation/schemas';
 import { flattenZodErrors, type FormState } from './types';
-import { redirectWithError, redirectWithNotice } from './helpers';
 
 const cartLinesSchema = z
   .array(
@@ -100,28 +99,29 @@ export async function placeOrderAction(_previous: FormState, formData: FormData)
   };
 }
 
-export async function confirmReceiptAction(formData: FormData): Promise<void> {
+export async function confirmReceiptAction(_previous: FormState, formData: FormData): Promise<FormState> {
   const id = uuidSchema.safeParse(formData.get('orderId'));
-  if (!id.success) return;
-  const path = `/buyer/orders/${id.data}`;
+  if (!id.success) return { error: 'الطلب غير صالح.' };
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.rpc('transition_order', { p_order_id: id.data, p_to: 'completed', p_reason: null });
-  if (error) redirectWithError(path, userMessageFor(error));
-  revalidatePath(path);
-  redirectWithNotice(path, 'completed');
+  revalidatePath(`/buyer/orders/${id.data}`);
+  revalidatePath('/buyer/orders');
+  revalidatePath('/buyer');
+  if (error) return { error: userMessageFor(error) };
+  return { success: 'شكرا لتأكيد الاستلام. اكتمل الطلب.' };
 }
 
-export async function cancelOrderAction(formData: FormData): Promise<void> {
+export async function cancelOrderAction(_previous: FormState, formData: FormData): Promise<FormState> {
   const id = uuidSchema.safeParse(formData.get('orderId'));
-  if (!id.success) return;
-  const path = `/buyer/orders/${id.data}`;
+  if (!id.success) return { error: 'الطلب غير صالح.' };
   const reason = String(formData.get('reason') ?? '').trim() || null;
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.rpc('transition_order', { p_order_id: id.data, p_to: 'cancelled', p_reason: reason });
-  if (error) redirectWithError(path, userMessageFor(error));
-  revalidatePath(path);
+  revalidatePath(`/buyer/orders/${id.data}`);
   revalidatePath('/buyer/orders');
-  redirectWithNotice(path, 'cancelled');
+  revalidatePath('/buyer');
+  if (error) return { error: userMessageFor(error) };
+  return { success: 'تم إلغاء الطلب.' };
 }
 
 export async function openDisputeAction(_previous: FormState, formData: FormData): Promise<FormState> {
